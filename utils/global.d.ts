@@ -7,10 +7,17 @@ export type JournalInfo = {
 };
 
 export type Reference = {
-    title: string;
-    author: string;
-    year: number|string;
-    url: string;
-    venue?: string;
-    journal?: JournalInfo;
+  title: string;
+  author: string;
+  year: number | string;
+  url: string;
+  venue?: string;
+  journal?: JournalInfo;
+  journalReference?: string;
+};
+
+export interface IndexProps {
+  params: {
+    lng: string;
   };
+}

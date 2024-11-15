@@ -26,7 +26,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+# .env*.local
 
 # vercel
 .vercel
@@ -37,6 +37,18 @@ next-env.d.ts
 
 pass
 .env
+# .env.local
 
 .vercel
 post.md
+
+# Sentry Config File
+.sentryclirc
+
+#vitepress
+docs/.vitepress/dist/*
+node_modules
+dist
+cache
+# Sentry Config File
+.sentryclirc

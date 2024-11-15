@@ -7,6 +7,9 @@ import { Reference } from "@/utils/global";
 //supabase
 const supabase = createClient();
 import { createClient } from "@/utils/supabase/client";
+//sentry
+import * as Sentry from "@sentry/nextjs";
+
 //获取用户id
 export async function getUser() {
   const { data, error } = await supabase.auth.getSession();
@@ -58,17 +61,17 @@ export async function submitPaper(
       });
 
       const data = await response.json();
-      console.log(
-        "Response data in submitPaper:",
-        data,
-        `此次更新的是第${paperNumber}篇论文,` +
-          `${editorContent !== undefined ? "更新内容为" + editorContent : ""}` +
-          `${
-            references !== undefined
-              ? "更新引用为" + JSON.stringify(references)
-              : ""
-          }`
-      );
+      // console.log(
+      //   "Response data in submitPaper:",
+      //   data,
+      //   `此次更新的是第${paperNumber}篇论文,` +
+      //     `${editorContent !== undefined ? "更新内容为" + editorContent : ""}` +
+      //     `${
+      //       references !== undefined
+      //         ? "更新引用为" + JSON.stringify(references)
+      //         : ""
+      //     }`
+      // );
       return data;
     } catch (error) {
       console.error("Error submitting paper in submitPaper:", error);
@@ -170,5 +173,41 @@ export async function fetchUserVipStatus(userId: string) {
     return data.is_vip;
   } else {
     return false;
+  }
+}
+
+//profiles表 插入用户信息
+export async function insertUserProfile(data: any, supabase: SupabaseClient) {
+  let user;
+  if (data.user) {
+    user = data.user;
+  } else {
+    user = data;
+  }
+
+  if (user) {
+    // console.log("user in insertUserProfile:", user);
+    const currentTime = new Date().toISOString(); // 生成ISO格式的时间字符串
+
+    const { data, error: profileError } = await supabase
+      .from("profiles")
+      .upsert([
+        {
+          id: user.id,
+          email: user.email,
+          created_at: currentTime, // 添加创建时间
+        },
+      ]);
+
+    if (profileError) {
+      console.error("Failed to create user profile:", profileError);
+      Sentry.captureException(profileError);
+    }
+
+    Sentry.setUser({
+      email: user.email,
+      id: user.id,
+      ip_address: "{{auto}}",
+    });
   }
 }

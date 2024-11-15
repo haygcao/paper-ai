@@ -15,11 +15,16 @@ interface Paper {
   url: string;
 }
 
-async function getSemanticPapers(query: string, year: string, limit = 2) {
+async function getSemanticPapers(
+  query: string,
+  year: string,
+  offset = -1,
+  limit = 2
+) {
   try {
-    const maxOffset = 30 - limit; // 假设总记录数为 100
-    const offset = getRandomOffset(maxOffset);
-    const url = `https://api.semanticscholar.org/graph/v1/paper/search`;
+    const maxOffset = 20 - limit; // 假设总记录数为 20
+    if (offset === -1) offset = getRandomOffset(maxOffset);
+    const url = `https://proxy.paperai.life/proxy/https://api.semanticscholar.org/graph/v1/paper/search`;
     const response = await axios.get(url, {
       headers: {
         "x-api-key": process.env.NEXT_PUBLIC_SEMANTIC_API_KEY,
@@ -27,9 +32,10 @@ async function getSemanticPapers(query: string, year: string, limit = 2) {
       params: {
         query: query,
         offset: offset,
-        limit: 2,
+        limit: limit,
         year: year,
-        fields: "title,year,authors.name,abstract,venue,url,journal",
+        fields:
+          "title,year,authors.name,abstract,venue,url,journal,externalIds",
       },
     });
     // 提取并处理论文数据
@@ -46,7 +52,7 @@ async function getSemanticPapers(query: string, year: string, limit = 2) {
   } catch (error: any) {
     // console.error("Error fetching data from Semantic Scholar API:", error);
     throw new Error(
-      `Error fetching data from Semantic Scholar API:${JSON.stringify(
+      `Semantic Scholar fail（请使用英文并缩短关键词）:${JSON.stringify(
         error.response,
         null,
         2

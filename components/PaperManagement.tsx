@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 //redux
 import { useAppDispatch, useAppSelector } from "@/app/store";
 import {
@@ -11,6 +11,7 @@ import {
   setPaperNumberRedux,
   setContentUpdatedFromNetwork,
   setIsVip,
+  setShowPaperManagement,
 } from "@/app/store/slices/stateSlice";
 //supabase
 import { createClient } from "@/utils/supabase/client";
@@ -24,14 +25,18 @@ import {
 } from "@/utils/supabase/supabaseutils";
 //动画
 import { CSSTransition } from "react-transition-group";
-import { animated, useSpring } from "@react-spring/web";
+// import { animated, useSpring } from "@react-spring/web";
 
 //删除远程论文按钮
 import ParagraphDeleteButton from "@/components/ParagraphDeleteInterface";
 //vip充值按钮
 import BuyVipButton from "@/components/BuyVipButton"; // 假设这是购买VIP的按钮组件
+//i18n
+import { useTranslation } from "@/app/i18n/client";
 
-const PaperManagement = () => {
+const PaperManagement = ({ lng }) => {
+  //i18n
+  const { t } = useTranslation(lng);
   //supabase
   const supabase = createClient();
   //redux
@@ -42,6 +47,8 @@ const PaperManagement = () => {
   const showPaperManagement = useAppSelector(
     (state) => state.state.showPaperManagement
   );
+  const editorContent = useAppSelector((state) => state.auth.editorContent);
+  const referencesRedux = useAppSelector((state) => state.auth.referencesRedux);
   //vip状态
   const isVip = useAppSelector((state) => state.state.isVip);
   //获取的论文数量列表状态
@@ -51,7 +58,7 @@ const PaperManagement = () => {
 
   //获取用户存储在云端的论文，使用useCallback定义一个记忆化的函数来获取用户论文
   const fetchPapers = useCallback(async () => {
-    const user = await getUser(supabase);
+    const user = await getUser();
     if (user && user.id) {
       // console.log("user.id", user.id);
       const numbers = await getUserPaperNumbers(user.id, supabase);
@@ -105,6 +112,13 @@ const PaperManagement = () => {
   }
 
   const handleAddPaperClick = async () => {
+    // 先手动保存本地内容到云端
+    // await submitPaper(
+    //   supabase,
+    //   editorContent,
+    //   referencesRedux,
+    //   paperNumberRedux
+    // );
     // 添加一个新的空白论文
     await submitPaper(
       supabase,
@@ -121,6 +135,33 @@ const PaperManagement = () => {
   //   from: { opacity: 0 },
   // });
 
+  //用于判断点击有没有落在区域中
+  const paperManagementRef = useRef(null); // 用于引用PaperManagement组件的根元素
+  const handleClickOutside = (event) => {
+    if (
+      paperManagementRef.current &&
+      !paperManagementRef.current.contains(event.target) &&
+      showPaperManagement
+    ) {
+      // 如果点击事件的目标不是PaperManagement组件内的元素
+      // 隐藏组件
+      console.log("Clicked outside of the PaperManagement component.");
+      dispatch(setShowPaperManagement());
+    }
+  };
+
+  useEffect(() => {
+    if (showPaperManagement) {
+      // 只有当组件可见时，才添加事件监听器
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    // 组件卸载或状态改变时移除事件监听器
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPaperManagement]); // 依赖项数组包含showPaperManagement状态
+
   return (
     <CSSTransition
       in={showPaperManagement}
@@ -131,9 +172,15 @@ const PaperManagement = () => {
       {/* showPaperManagement ? ( */}
       {/* <animated.div style={animations}> */}
       <>
-        <div className="paper-management-container flex flex-col items-center space-y-4">
+        <div
+          ref={paperManagementRef}
+          className="paper-management-container flex flex-col items-center space-y-4"
+        >
           <div className="max-w-md w-full bg-blue-gray-100 rounded overflow-hidden shadow-lg mx-auto p-5">
-            <h1 className="font-bold text-3xl text-center">Paper Management</h1>
+            <h1 className="font-bold text-3xl text-center">
+              {" "}
+              {t("Paper Management")}
+            </h1>
           </div>
           {isVip ? (
             <div>
@@ -141,10 +188,13 @@ const PaperManagement = () => {
                 onClick={handleAddPaperClick}
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
               >
-                + Add Paper
+                {t("+ Add Paper")}
               </button>
               <div className="flex flex-col items-center space-y-2">
-                <h2 className="text-xl font-semibold">Your Papers</h2>
+                <h2 className="text-xl font-semibold">
+                  {" "}
+                  {t("Your Cloud Papers")}
+                </h2>
                 {paperNumbers.length > 0 ? (
                   <ul className="list-disc">
                     {[...paperNumbers]
@@ -188,7 +238,7 @@ const PaperManagement = () => {
               </div>
             </div>
           ) : (
-            <BuyVipButton />
+            <BuyVipButton lng={lng} />
           )}
         </div>
       </>

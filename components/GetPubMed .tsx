@@ -10,14 +10,20 @@ type PubMedID = string;
 // 定义idList为PubMedID数组
 type IDList = PubMedID[];
 
-async function getPubMedPapers(query: string, year: number, limit = 2) {
+async function getPubMedPapers(
+  query: string,
+  year: number,
+  offset = -1,
+  limit = 2
+) {
   try {
     const baseURL =
       "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi";
     const db = "pubmed"; // 设定搜索的数据库为PubMed
     const retMax = limit; // 检索的最大记录数
-    const retStart = getRandomOffset(30 - limit); // 假设每页最多30条，根据需要随机偏移
-    const url = `${baseURL}?db=${db}&term=${query}[Title/Abstract]+AND+2018:3000[Date - Publication]&retMax=${retMax}&retStart=${retStart}&api_key=${process.env.NEXT_PUBLIC_PUBMED_API_KEY}`;
+    const maxOffset = 20 - limit; // 假设总记录数为 20
+    if (offset === -1) offset = getRandomOffset(maxOffset);
+    const url = `${baseURL}?db=${db}&term=${query}[Title/Abstract]+AND+${year}:3000[Date - Publication]&retMax=${retMax}&retStart=${offset}&api_key=${process.env.NEXT_PUBLIC_PUBMED_API_KEY}`;
     const response = await axios.get(url, { responseType: "text" });
     console.log(response.data);
     // 解析XML数据
@@ -31,7 +37,7 @@ async function getPubMedPapers(query: string, year: number, limit = 2) {
     // 这里只返回了ID列表，你可能需要根据实际需要进行调整
     return idList;
   } catch (error) {
-    console.error("Error fetching data from PubMed API:", error);
+    console.error(" PubMed API失败（请使用英文并缩短关键词）:", error);
     return null; // 或根据需要处理错误
   }
 }
@@ -60,18 +66,18 @@ async function getPubMedPaperDetails(idList: IDList) {
     // 解析XML数据
     const parser = new xml2js.Parser({
       explicitArray: false,
-      ignoreAttrs: true, // 忽略XML属性
+      ignoreAttrs: false, // 忽略XML属性
       charkey: "text", // 字符数据的键
       trim: true, // 去除文本前后空格
     });
     let result = await parser.parseStringPromise(data);
 
-    console.log(result);
+    // console.log(result);
     // 提取并处理文章详细信息
     const articles = result.PubmedArticleSet.PubmedArticle.map((article) => {
       const medlineCitation = article.MedlineCitation;
       const articleDetails = medlineCitation.Article;
-
+      // console.log("atricledetails", articleDetails);
       const abstractTexts = articleDetails.Abstract.AbstractText;
 
       let abstract;
@@ -79,7 +85,7 @@ async function getPubMedPaperDetails(idList: IDList) {
       if (Array.isArray(abstractTexts)) {
         // 如果是数组，遍历数组并连接每个元素的文本
         abstract = abstractTexts
-          .map((text) => (typeof text === "object" ? text._ : text))
+          .map((text) => (typeof text === "object" ? text.text : text))
           .join(" ");
       } else if (typeof abstractTexts === "string") {
         // 如果 abstractTexts 直接就是字符串
@@ -106,47 +112,84 @@ async function getPubMedPaperDetails(idList: IDList) {
               return names.join(" ");
             })
           : ["Unknown Author"];
-      const journalTitle = articleDetails.Journal.Title; // 提取出版者信息（杂志标题）
 
       let publishedDate = "No date available";
       // 尝试从 ArticleDate 获取发表日期
       if (articleDetails.ArticleDate) {
-        publishedDate = `${articleDetails.ArticleDate.Year}-${articleDetails.ArticleDate.Month}-${articleDetails.ArticleDate.Day}`;
+        publishedDate = `${articleDetails.ArticleDate.Year}`;
       }
       // 如果 ArticleDate 不存在，尝试从 JournalIssue/PubDate 获取
       else if (articleDetails.Journal.JournalIssue.PubDate) {
-        publishedDate = `${articleDetails.Journal.JournalIssue.PubDate.Year}-${
-          articleDetails.Journal.JournalIssue.PubDate.Month || ""
+        publishedDate = `${articleDetails.Journal.JournalIssue.PubDate.Year}
         }`;
       }
 
+      let journalTitle = articleDetails.Journal.Title; // 提取出版者信息（杂志标题）
+      journalTitle += `, ${publishedDate}`;
+      if (articleDetails.Journal.JournalIssue.Volume) {
+        journalTitle += `, ${articleDetails.Journal.JournalIssue.Volume}`;
+      }
+      if (articleDetails.Pagination) {
+        journalTitle += `: ${articleDetails.Pagination.StartPage}-${articleDetails.Pagination.EndPage}`;
+      }
       // 构建文章的 PubMed URL
-      const articleUrl = `https://pubmed.ncbi.nlm.nih.gov/${medlineCitation.PMID}/`;
+      const articleUrl = `https://pubmed.ncbi.nlm.nih.gov/${medlineCitation.PMID.text}/`;
       // console.log("medlineCitation", medlineCitation);
-
+      console.log("\n,journalTitle", journalTitle);
+      let title = articleDetails.ArticleTitle;
+      // 检查并去除字符串最后的句点
+      if (title.endsWith(".")) {
+        title = title.slice(0, -1);
+      }
+      // 提取DOI
+      let doi = null;
+      if (
+        article.PubmedData &&
+        article.PubmedData.ArticleIdList &&
+        Array.isArray(article.PubmedData.ArticleIdList.ArticleId)
+      ) {
+        const doiObject = article.PubmedData.ArticleIdList.ArticleId.find(
+          (idObj) => idObj.$.IdType === "doi"
+        );
+        if (doiObject) {
+          doi = doiObject.text; // 获取DOI值
+        }
+      }
+      console.log("doi", doi);
+      console.log(
+        "链接",
+        medlineCitation.PMID.text,
+        "属性",
+        typeof medlineCitation.PMID.text
+      );
       return {
-        id: medlineCitation.PMID._,
-        title: articleDetails.ArticleTitle,
+        id: Number(medlineCitation.PMID.text),
+        title: title,
         abstract: abstract,
         authors: authors,
         url: articleUrl,
         year: publishedDate,
         journal: journalTitle,
+        doi: doi,
         // 其他需要的字段可以继续添加
       };
     });
 
     return articles;
   } catch (error) {
-    console.error("Error fetching paper details from PubMed:", error);
-    return null;
+    throw new Error(`Error fetching paper details from PubMed:", ${error}`);
   }
 }
 
 // 示例：使用这些函数
-async function fetchPubMedData(query: string, year: number, limit: number) {
+async function fetchPubMedData(
+  query: string,
+  year: number,
+  offset: number,
+  limit: number
+) {
   try {
-    const idList = await getPubMedPapers(query, year, limit);
+    const idList = await getPubMedPapers(query, year, offset, limit);
     if (idList && idList.length > 0) {
       const paperDetails = await getPubMedPaperDetails(idList);
       console.log("fetchPubMedData", paperDetails); // 处理或显示文章详情
@@ -154,7 +197,7 @@ async function fetchPubMedData(query: string, year: number, limit: number) {
     }
   } catch (error) {
     //这里无法起作用因为pubmed不会返回400系错误
-    throw new Error(`未搜索到文献: ${error}`);
+    throw new Error(`pubmed: ${error}`);
   }
 }
 

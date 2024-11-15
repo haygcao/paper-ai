@@ -3,13 +3,13 @@ import Quill from "quill";
 import { animated, useSpring } from "@react-spring/web";
 
 function getTextBeforeCursor(quill: Quill, length = 500) {
-  const cursorPosition = quill.getSelection()!.index;
+  const cursorPosition = quill.getSelection(true)!.index;
   const start = Math.max(0, cursorPosition - length); // 确保开始位置不是负数
   return quill.getText(start, cursorPosition - start);
 }
 
 function getNumberBeforeCursor(quill: Quill, length = 3000) {
-  const cursorPosition = quill.getSelection()!.index;
+  const cursorPosition = quill.getSelection(true)!.index;
   const start = Math.max(0, cursorPosition - length); // 确保开始位置不是负数
   const textBeforeCursor = quill.getText(start, cursorPosition - start);
 
@@ -106,7 +106,7 @@ function removeParagraphWithReference(
   if (startIndex === -1) {
     return htmlString;
   }
-  const paragraphTag = "<p><br></p>";
+  const paragraphTag = "</p><p>";
   // 向前找到<p><br></p>作为段落的开始标志
   let startParagraphIndex = htmlString.lastIndexOf(paragraphTag, startIndex);
   if (startParagraphIndex !== -1) {
@@ -133,7 +133,7 @@ function removeParagraphWithReference(
 }
 
 function updateBracketNumbersInDeltaKeepSelection(quill: Quill) {
-  const selection = quill.getSelection();
+  const selection = quill.getSelection(true);
   const delta = quill.getContents();
   const updatedDelta = updateBracketNumbersInDelta(delta);
   quill.setContents(updatedDelta);
@@ -147,7 +147,7 @@ export function delteIndexUpdateBracketNumbersInDeltaKeepSelection(
   index: number,
   rmPg: boolean
 ) {
-  const selection = quill.getSelection();
+  const selection = quill.getSelection(true);
   const delta = quill.getContents();
   let updatedDelta = deleteReferenceNumberOrParagraph(
     delta,
@@ -180,6 +180,67 @@ function convertToSuperscript(quill: Quill) {
     if (startIndex + length < text.length) {
       quill.formatText(startIndex + length, 1, "script", false);
     }
+  }
+}
+
+function removeDuplicateBracketNumbersInDelta(delta: any) {
+  let seenNumbers = new Set(); // 用于记录已经看到的编号
+
+  const updatedOps = delta.ops.map((op: any) => {
+    if (typeof op.insert === "string") {
+      // 使用正则表达式和replace方法来找到并处理[数字]
+      return {
+        ...op,
+        insert: op.insert.replace(/\[\d+\]/g, (match) => {
+          const number = match.slice(1, -1); // 提取括号中的数字
+          if (seenNumbers.has(number)) {
+            // 如果这个编号已经处理过，就删除它（用空字符串替换）
+            return "";
+          } else {
+            // 如果是首次见到这个编号，就记录并保留它
+            seenNumbers.add(number);
+            console.log("seenNumbers", seenNumbers);
+            return match;
+          }
+        }),
+      };
+    }
+    return op;
+  });
+
+  return { ops: updatedOps };
+}
+
+export function deleteSameBracketNumber(
+  quill: Quill,
+  cursorOldPosition: number
+) {
+  //搜索是否有相同的括号编号，如果有相同的则删除到只剩一个
+  const selection = quill.getSelection(true);
+  if (selection) {
+    // 获取整个文档的内容
+    const delta = quill.getContents();
+
+    // 仅获取选区中的Delta片段
+    const selectionDelta = delta.slice(cursorOldPosition, selection.index);
+    console.log("cursorOldPosition", cursorOldPosition);
+    console.log("selection.index", selection.index);
+    console.log("selectionDelta", selectionDelta);
+    // 对选区中的Delta片段进行处理，移除重复的括号编号
+    const updatedSelectionDelta =
+      removeDuplicateBracketNumbersInDelta(selectionDelta);
+
+    // 构建一个新的Delta，包括未修改的选区前部分和处理后的选区后部分
+    const updatedDelta = delta
+      .slice(0, cursorOldPosition)
+      .concat(updatedSelectionDelta)
+      .concat(delta.slice(selection.index));
+
+    // 设置更新后的内容
+    quill.setContents(updatedDelta);
+
+    // 恢复选区
+    quill.setSelection(selection.index, selection.length);
   }
 }
 
@@ -224,6 +285,61 @@ function formatAllReferencesForCopy(references: Reference[]): string {
 export function formatTextInEditor(editor: Quill) {
   convertToSuperscript(editor);
   updateBracketNumbersInDeltaKeepSelection(editor);
+}
+
+//这个是格式化semantic scholar的
+export function formatJournalReference(entry: any) {
+  if (!entry.journal) {
+    return ""; // 如果没有期刊信息，直接返回空字符串
+  }
+
+  // 基础引用格式：期刊名称和出版年份
+  let reference = `${entry.journal.name}, ${entry.year}`;
+
+  // 如果有卷号，添加卷号信息
+  if (entry.journal.volume) {
+    reference += `, ${entry.journal.volume}`;
+  }
+
+  // 如果有页码，添加页码信息
+  if (entry.journal.pages) {
+    reference += `: ${entry.journal.pages}`;
+  }
+
+  return reference;
+}
+
+function formatReference(reference: Reference) {
+  if (reference.journal) {
+    return `[J]. ${reference.journal}. `;
+  } else if (reference.journalReference) {
+    return `[J]. ${reference.journalReference}`;
+  } else {
+    return `${reference.venue}, ${reference.year}.`;
+  }
+}
+export function getFullReference(reference: Reference) {
+  let fullReference = `${reference.author}. ${reference.title}`;
+  fullReference += formatReference(reference);
+  return fullReference;
+}
+export function getAllFullReferences(references: Reference[], style: string) {
+  return references
+    .map((reference, index) => {
+      return `[${index + 1}] ${renderCitation(reference, style)}`;
+    })
+    .join("\n");
+}
+
+export function renderCitation(reference: any, style: string) {
+  // 检查当前的引用风格
+  if (style === "custom-chinese") {
+    // 如果是“custom-chinese”，则调用 getFullReference 来渲染引用
+    return getFullReference(reference);
+  } else {
+    // 否则，返回引用对象中对应风格的引用文本
+    return reference[style];
+  }
 }
 
 export {

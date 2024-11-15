@@ -1,3 +1,4 @@
+"use client";
 import { useCallback } from "react";
 import { saveAs } from "file-saver";
 import * as quillToWord from "quill-to-word";
@@ -5,13 +6,14 @@ import * as quillToWord from "quill-to-word";
 import { useAppDispatch, useAppSelector } from "@/app/store";
 import ReduxProvider from "@/app/store/ReduxProvider";
 import { Reference } from "@/utils/global";
-import { formatAllReferencesForCopy } from "@/utils/others/quillutils";
+import { getAllFullReferences } from "@/utils/others/quillutils";
 type ParaIn = {
   editor: any;
 };
 
 const ExportDocx = ({ editor }: ParaIn) => {
   const references = useAppSelector((state) => state.auth.referencesRedux);
+  const citationStyle = useAppSelector((state) => state.state.citationStyle);
 
   const prepareReferencesForQuill = (references: Reference[]) => {
     // 首先添加一个标题
@@ -24,8 +26,17 @@ const ExportDocx = ({ editor }: ParaIn) => {
         insert: "\n参考文献\n",
       },
     ];
-    const referencesString = formatAllReferencesForCopy(references);
-    const quillReferences = [{ insert: referencesString }];
+    const referencesString = getAllFullReferences(references, citationStyle);
+    const quillReferences = [
+      {
+        attributes: {
+          // 提供默认值，即使这些值不会改变文本样式
+          bold: false, // 默认为false，因为引用通常不需要加粗
+          align: "left", // 默认为left，这是大多数文本的常规对齐方式
+        },
+        insert: referencesString,
+      },
+    ];
     // 合并标题和引用列表
     return referencesWithTitle.concat(quillReferences);
   };
@@ -60,7 +71,7 @@ const ExportDocx = ({ editor }: ParaIn) => {
       quillToWordConfig
     );
     saveAs(docAsBlob, "word-export.docx");
-  }, [editor]);
+  }, [editor, references]);
 
   return (
     <ReduxProvider>

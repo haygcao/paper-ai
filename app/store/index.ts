@@ -27,6 +27,10 @@ const statePersistConfig = {
     "paperNumberRedux",
     "contentUpdatedFromNetwork",
     "isVip",
+    "language",
+    "isJumpToReference",
+    "isEvaluateTopicMatch",
+    "citationStyle",
   ],
 };
 

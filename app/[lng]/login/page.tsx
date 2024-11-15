@@ -2,12 +2,26 @@ import Link from "next/link";
 import { headers, cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-
-export default function Login({
+import * as Sentry from "@sentry/nextjs";
+import DeployButton from "@/components/DeployButton";
+import SettingsLink from "@/components/SettingsLink";
+//i18n
+import { useTranslation } from "@/app/i18n";
+import { FooterBase } from "@/components/Footer/FooterBase";
+//supabase
+import { insertUserProfile } from "@/utils/supabase/supabaseutils";
+// SignInWithProvider
+import { SignInWithProvider } from "@/components/SignInWithProvider";
+import LinuxdoSignin from "@/components/LinuxdoSignin";
+export default async function Login({
   searchParams,
+  params: { lng },
 }: {
   searchParams: { message: string };
+  params: { lng: string };
 }) {
+  const { t } = await useTranslation(lng);
+
   const signIn = async (formData: FormData) => {
     "use server";
 
@@ -16,11 +30,19 @@ export default function Login({
     const cookieStore = cookies();
     const supabase = createClient(cookieStore);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-
+    //sentry
+    const user = data?.user;
+    if (user && process.env.NODE_ENV === "production") {
+      Sentry.setUser({
+        email: user.email,
+        id: user.id,
+        ip_address: "{{auto}}}",
+      });
+    }
     if (error) {
       return redirect("/login?message=Could not authenticate user");
     }
@@ -45,18 +67,8 @@ export default function Login({
       },
     });
     //profiles表 插入用户信息
-    const user = data?.user;
-    if (user) {
-      const { data, error: profileError } = await supabase
-        .from("profiles")
-        .insert([{ id: user.id, email: user.email }]);
+    await insertUserProfile(data, supabase);
 
-      if (profileError) {
-        console.error("Failed to create user profile:", profileError);
-      }
-    } else if (error) {
-      console.error("Sign in error:", error);
-    }
     if (error) {
       return redirect("/login?message=Could not authenticate user");
     }
@@ -66,6 +78,12 @@ export default function Login({
 
   return (
     <div className="flex-1 flex flex-col w-full px-8 sm:max-w-md justify-center gap-2">
+      <nav className="w-full flex justify-center border-b border-b-foreground/10 h-16">
+        <div className="w-full max-w-4xl flex justify-between items-center p-3 text-sm">
+          <DeployButton />
+          <SettingsLink />
+        </div>
+      </nav>
       <Link
         href="/"
         className="absolute left-8 top-8 py-2 px-4 rounded-md no-underline text-foreground bg-btn-background hover:bg-btn-background-hover flex items-center group text-sm"
@@ -86,7 +104,6 @@ export default function Login({
         </svg>{" "}
         Back
       </Link>
-
       <form
         className="animate-in flex-1 flex flex-col w-full justify-center gap-2 text-foreground"
         action={signIn}
@@ -111,13 +128,17 @@ export default function Login({
           required
         />
         <button className="bg-green-700 rounded-md px-4 py-2 text-foreground mb-2">
-          Sign In
+          Sign In（登录）
         </button>
         <button
           formAction={signUp}
           className="border border-foreground/20 rounded-md px-4 py-2 text-foreground mb-2"
         >
-          Sign Up
+          Sign Up（注册）
+        </button>
+        {/* 重置密码 */}
+        <button className="border border-foreground/20 rounded-md px-4 py-2 text-foreground mb-2">
+          <Link href="/request-reset">Reset Password（重置密码）</Link>
         </button>
         {searchParams?.message && (
           <p className="mt-4 p-4 bg-foreground/10 text-foreground text-center">
@@ -125,6 +146,32 @@ export default function Login({
           </p>
         )}
       </form>
+      <div>
+        <LinuxdoSignin />
+        <SignInWithProvider
+          provider="github"
+          redirectTo="https://www.paperai.life/welcome"
+        />
+        <SignInWithProvider
+          provider="google"
+          redirectTo="https://www.paperai.life/welcome"
+        />
+      </div>
+      <footer className="w-full border-t border-t-foreground/10 p-8 flex justify-center text-center text-xs">
+        <div className="flex items-center space-x-4">
+          {" "}
+          {/* 添加flex容器来水平排列子元素 */}
+          <a
+            href="https://github.com/14790897/paper-ai"
+            target="_blank"
+            className="font-bold text-blue-600 hover:underline hover:text-blue-800"
+            rel="noreferrer"
+          >
+            {t("give me a star in GitHub")}
+          </a>
+          <FooterBase t={t} lng={lng} />
+        </div>
+      </footer>
     </div>
   );
 }

@@ -1,5 +1,118 @@
 # Changelog
 
+## [1.9.0](https://www.github.com/14790897/paper-ai/compare/v1.8.0...v1.9.0) (2024-03-13)
+
+
+### Features
+
+* google登录 ([15c3a1f](https://www.github.com/14790897/paper-ai/commit/15c3a1f0acae8f5d6e610382b4fb886cc637d4f9))
+* 允许重置密码 ([939f5c2](https://www.github.com/14790897/paper-ai/commit/939f5c28e9f658f2899cb262c16e78d42601a320))
+* 可以手动停止AI的输出(左下角按钮) ([a72329d](https://www.github.com/14790897/paper-ai/commit/a72329d4a209aba4a0111093ece3b8cf89113ad2))
+* 完成linuxdo oauth ([0090ffd](https://www.github.com/14790897/paper-ai/commit/0090ffd3bbe83a99a4de15e733619569cd78a69b))
+
+
+### Bug Fixes
+
+* GitHub登入可以插入信息 ([559b401](https://www.github.com/14790897/paper-ai/commit/559b4010c276f45dec791aaea17133d6690aac63))
+* github登录无法将用户数据插入数据库 ([65db119](https://www.github.com/14790897/paper-ai/commit/65db119a9ac97009f15238e6ef26236bc6be14c7))
+* quilleditor ssr加载失败 ([8a25248](https://www.github.com/14790897/paper-ai/commit/8a25248c29c578c75ec9e05fd1cdd339f131e5d6))
+* remove .env.local ([0bfaacf](https://www.github.com/14790897/paper-ai/commit/0bfaacf6ee52309aaa55961037aba29a1558e6a6))
+* remove freshwork ([f8e4cfd](https://www.github.com/14790897/paper-ai/commit/f8e4cfd205cfb5b5ec105f662c0ff0b6d8590429))
+* seo ([72300bf](https://www.github.com/14790897/paper-ai/commit/72300bf6eb23757845734ccfcfb99d40274c9257))
+* seo图片问题 ([6e807a7](https://www.github.com/14790897/paper-ai/commit/6e807a703d2a72f6ce557f043abefc44d746992c))
+* 使用cf反代解决semantic cors问题 ([836aa49](https://www.github.com/14790897/paper-ai/commit/836aa49847ec7bc4fd2686a324a82ab19173fc83))
+* 前端环境变量需要使用NEXT_PUBLIC_ ([6243aa5](https://www.github.com/14790897/paper-ai/commit/6243aa5401f7689aa7e4caf81a39a87578484299))
+* 应用id问题 ([64cab48](https://www.github.com/14790897/paper-ai/commit/64cab48ae34ebb5500553dd3908167a95f1cbaf4))
+* 新用户没有获得编辑器焦点会导致报错 ([4b64827](https://www.github.com/14790897/paper-ai/commit/4b64827c1d3c77dc05ebad359f0f4d384145211f))
+* 点击空白页面可以可以取消论文列表页 ([b5bd878](https://www.github.com/14790897/paper-ai/commit/b5bd878cdafb6a54826f8aeafb16e6e6bc1e95bb))
+* 读取ai响应 ([e7aa998](https://www.github.com/14790897/paper-ai/commit/e7aa998ca7dafe38a0c12ada4f168717c6e45439))
+* 谷歌登陆后不再弹出 ([5f3252d](https://www.github.com/14790897/paper-ai/commit/5f3252da6e2715e4afbb7ab0b648112c22604230))
+* 通过判断user是否登陆来决定是否one tap ([8730415](https://www.github.com/14790897/paper-ai/commit/87304153526200a2c3340c433c87348d5199287b))
+
+## [1.8.0](https://www.github.com/14790897/paper-ai/compare/v1.7.0...v1.8.0) (2024-02-24)
+
+
+### Features
+
+* 优雅的报错提示 ([93f8889](https://www.github.com/14790897/paper-ai/commit/93f8889c5798b6f47dfb3a3831c051a11078786d))
+* 可以切换多种引用格式 ([9b835bb](https://www.github.com/14790897/paper-ai/commit/9b835bbadd89763ab63fa159f35dd7ed657296c6))
+* 增加了时间范围选择,除arxiv ([49a757f](https://www.github.com/14790897/paper-ai/commit/49a757f6c7d2a18bbde0e95cf57d4aaf5127e24c))
+* 论文搜索完成进行提示 ([6c37459](https://www.github.com/14790897/paper-ai/commit/6c37459fe3b35f379e5b0b4d3c65224f32efb04d))
+
+
+### Bug Fixes
+
+* 复制文献问题 ([a38b9ce](https://www.github.com/14790897/paper-ai/commit/a38b9cee529a04100c4ebb8ba4129c2caa86f2d6))
+
+## [1.7.0](https://www.github.com/14790897/paper-ai/compare/v1.6.0...v1.7.0) (2024-02-22)
+
+
+### Features
+
+* pwa可离线访问 service worker ([ff09eee](https://www.github.com/14790897/paper-ai/commit/ff09eee99343cfa6ee6da301428c4a0b3c790bf6))
+* seo优化 ([bedc8a3](https://www.github.com/14790897/paper-ai/commit/bedc8a3ce0a314fd2cc7add65defdce372a1c432))
+* 加了个用户反馈组件 ([cef12f3](https://www.github.com/14790897/paper-ai/commit/cef12f31a026be9ccc6229943f6a64b3ebf930db))
+* 可选的对文献相关性检验 ([6cda6d1](https://www.github.com/14790897/paper-ai/commit/6cda6d176aac29b3972dfde305a62c0be0dc2437))
+
+
+### Bug Fixes
+
+* 用户反馈组件 ([8155299](https://www.github.com/14790897/paper-ai/commit/81552993bed272a5a05b19edd41aeb10106124b8))
+
+## [1.6.0](https://www.github.com/14790897/paper-ai/compare/v1.5.0...v1.6.0) (2024-02-19)
+
+
+### Features
+
+* github登录（测试中） ([4ee0816](https://www.github.com/14790897/paper-ai/commit/4ee08169df05a9bcf487a25c4b56c3785edbea7a))
+* 可以进行多轮文献查询 ([9d799f1](https://www.github.com/14790897/paper-ai/commit/9d799f1736a7ff72e09f9e36e916c0ab9e04cec4))
+* 增加了一个显示当前任务进度的进度条 ([c55a93c](https://www.github.com/14790897/paper-ai/commit/c55a93c79b20c7fb4b5ff15027110267d6874c24))
+* 如果AI多次引用同一文献则只返回第一个文献的引用数字 ([763a106](https://www.github.com/14790897/paper-ai/commit/763a1062f982b5f0b96da5afb3b3bb96fd66eaef))
+
+
+### Bug Fixes
+
+* ai对话 ([96d780d](https://www.github.com/14790897/paper-ai/commit/96d780dd3a1c04e4c4adbd61cd87d07a42fa3eaa))
+* pubmed参数写反 ([07070bf](https://www.github.com/14790897/paper-ai/commit/07070bf253044958931e138b5af0099ddc3fb8dd))
+* translation ([03febb1](https://www.github.com/14790897/paper-ai/commit/03febb136415fcd48a4248d19c1086bfc0c95f8d))
+* 修复lemon路由 ([5e7afea](https://www.github.com/14790897/paper-ai/commit/5e7afea400af03716d08e2d6d7aadb6eccd3448e))
+* 去除暗色模式 ([da5cb4f](https://www.github.com/14790897/paper-ai/commit/da5cb4fac84e800e4e8bcc105a395088af615631))
+* 只有在AI返回的内容没有错之后才能添加文献 ([3040c11](https://www.github.com/14790897/paper-ai/commit/3040c11ea1b843f923475ac117516e82de3f4458))
+* 图标正常显示 ([8ab1bdd](https://www.github.com/14790897/paper-ai/commit/8ab1bdd3935713595d35ed41471146cfa83cc4f0))
+* 导出word时文献不更新，因为usecallback没有添加变量 ([01d3ffe](https://www.github.com/14790897/paper-ai/commit/01d3ffebf7a86c27161d97b73a949a1f0d73a62b))
+* 论文引用格式 ([b603365](https://www.github.com/14790897/paper-ai/commit/b603365265314f61122a8bab0da1561bc1c0c5a2))
+
+## [1.5.0](https://www.github.com/14790897/paper-ai/compare/v1.4.0...v1.5.0) (2024-02-13)
+
+
+### Features
+
+* pubmed论文格式更新 ([3636fe1](https://www.github.com/14790897/paper-ai/commit/3636fe1c358e3f4edebca2c17f527383f787e7a4))
+* 加了一个按钮用来控制鼠标点击段落中的上标跳转到文献引用 ([e5d267c](https://www.github.com/14790897/paper-ai/commit/e5d267cf7075d8830bee172d2f8e5b6b1f487487))
+* 更准确的文献引用 ([c4d4100](https://www.github.com/14790897/paper-ai/commit/c4d410073caea3cdc7e016e492b62c22fec99543))
+* 记录selection位置以及自动清空UserInput内容 ([9e85552](https://www.github.com/14790897/paper-ai/commit/9e85552d8966f7408e2ae61b92b91d0b3ae40e59))
+
+
+### Bug Fixes
+
+* 删除段落的错误 ([089a7af](https://www.github.com/14790897/paper-ai/commit/089a7afa7e84ccd965e9a1d51a2cae47c0269b3e))
+* 未选中焦点的时候会报错 ([342d78b](https://www.github.com/14790897/paper-ai/commit/342d78bd882367cbf9afbfb234f85bfb05e3d489))
+
+## [1.4.0](https://www.github.com/14790897/paper-ai/compare/v1.3.0...v1.4.0) (2024-02-12)
+
+
+### Features
+
+* i18n 切换 ([2573950](https://www.github.com/14790897/paper-ai/commit/2573950ad82140a16d1d8d6c48d33fcfc269d81e))
+* i18n中文英文 ([d64295e](https://www.github.com/14790897/paper-ai/commit/d64295e27ad3668539be8cb3b8b46bbccf086334))
+* sentry ([f5ee326](https://www.github.com/14790897/paper-ai/commit/f5ee32669c23ceb79ea618dd04a8e781eabb4936))
+* sentry追踪用户 ([b983427](https://www.github.com/14790897/paper-ai/commit/b983427721dda54aac187c9b95f8d21988944c06))
+
+
+### Bug Fixes
+
+* reference中的journal终于搞定 ([67212d6](https://www.github.com/14790897/paper-ai/commit/67212d6a8514c67d8d9e19733ba1d228c0690eed))
+
 ## [1.3.0](https://www.github.com/14790897/paper-ai/compare/v1.2.0...v1.3.0) (2024-02-10)
 
 
